@@ -1,0 +1,27 @@
+# Suzuka International Racing Course — loaded from data/tracks/Suzuka.geojson
+#
+# Suzuka is ~5.8 km, a figure-8 layout with tight S-curves, the 130R fast
+# sweeper, the Degner curves, Spoon, and a long back straight.
+# Half-width ~7 m (real Suzuka is 12-15 m wide).
+#
+# Because the lap is much longer than circuit_lite, we increase max_steps
+# and lookahead distances.
+
+experiment_name: "suzuka"
+obs_mode: "B"
+
+track:
+  name: "Suzuka"
+  half_width: 7.0
+  lookahead_distances: [20, 50, 100, 175, 250]
+
+# Suzuka-specific env tuning
+env:
+  max_steps: 12000        # ~5.8 km at 80 m/s ≈ 73 s ≈ 1450 steps at dt=0.05
+  no_progress_steps: 400  # more slack for a longer circuit
+
+obs:
+  offset_max: 7.0         # match track half-width
+
+training:
+  eval_freq: 30_000       # less frequent evals (circuit takes longer)

@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.eggs/
+
+# Environments
+.venv/
+venv/
+env/
+
+# Training outputs (models, logs, animations)
+outputs/
+
+# Generated media
+*.mp4
+*.gif
+
+# IDE
+.vscode/
+
+# Claude
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# pytest
+.pytest_cache/

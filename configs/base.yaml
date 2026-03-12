@@ -1,0 +1,72 @@
+# ============================================================
+# Base configuration shared across all observation modes.
+# Override per-mode values in obs_a/b/c.yaml.
+# ============================================================
+
+experiment_name: "base"
+obs_mode: "B"          # A | B | C  (override in per-mode configs)
+seed: 42
+device: "auto"         # auto | cpu | cuda
+
+# ---- Track ------------------------------------------------
+track:
+  name: "circuit_lite"          # parametric circuit shipped with the repo
+  half_width: 5.0               # metres, uniform width for now
+  lookahead_distances: [10, 25, 50, 80, 120]  # metres ahead for obs C
+
+# ---- Vehicle / Physics ------------------------------------
+vehicle:
+  mass: 780.0                   # kg
+  wheelbase: 3.0                # m
+  max_speed: 80.0               # m/s  (~288 km/h)
+  max_steering_angle: 0.30      # rad  (~17 deg)
+  max_steering_rate: 0.60       # rad/s  per second
+  max_throttle_accel: 15.0      # m/s^2  (peak drive force / mass)
+  max_brake_decel: 22.0         # m/s^2
+  drag_coeff: 0.55              # c_d * A (effective, lumped)
+  roll_resist_coeff: 0.012      # rolling-resistance coefficient
+  mu_grip: 3.8                  # combined peak tyre mu (high-grip single-seater)
+  gravity: 9.81                 # m/s^2
+  dt: 0.05                      # simulation timestep, seconds
+
+# ---- Observation normalisation ----------------------------
+obs:
+  speed_max: 80.0               # used to normalise speed to [0, 1]
+  offset_max: 5.0               # normalise lateral offset by track half-width
+  curvature_scale: 50.0         # 1/curvature_scale maps curvature to ~[-1,1]
+
+# ---- Reward weights ----------------------------------------
+reward:
+  w_progress: 2.0               # reward per metre of forward arc-length progress
+  w_speed: 0.005                # small bonus for absolute speed (anti-crawl)
+  w_slip: -3.0                  # penalty per unit of normalised over-grip-slip
+  w_steer_smooth: -0.05         # penalty for large steering-rate commands
+  w_accel_smooth: -0.02         # penalty for large accel jerk
+  lap_completion_bonus: 500.0   # one-time bonus for completing a lap
+  off_track_penalty: -50.0      # one-time penalty on going off-track
+  min_progress_per_step: 0.10   # m/s forward progress threshold (anti-stall)
+
+# ---- Environment ------------------------------------------
+env:
+  max_steps: 4000               # hard truncation per episode
+  no_progress_steps: 200        # terminate if no meaningful forward progress
+  eval_deterministic: true
+
+# ---- Training (SAC) ----------------------------------------
+training:
+  total_timesteps: 1_000_000
+  n_eval_episodes: 3            # episodes averaged for each periodic evaluation
+  eval_freq: 20_000             # env steps between evaluations
+  learning_rate: 0.0003
+  buffer_size: 500_000
+  batch_size: 256
+  tau: 0.005
+  gamma: 0.99
+  ent_coef: "auto"
+  learning_starts: 5_000
+  gradient_steps: 1
+  train_freq: 1
+
+# ---- Output -------------------------------------------------
+output:
+  base_dir: "outputs"

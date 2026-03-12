@@ -1,0 +1,3 @@
+# Observation mode C: speed + lateral offset + heading error + lookahead curvature
+experiment_name: "obs_C"
+obs_mode: "C"
