@@ -74,6 +74,8 @@ def main() -> None:
         cfg = load_config_for_mode("B")
 
     # Apply CLI overrides
+    if args.mode is not None:
+        cfg.obs_mode = args.mode
     if args.name is not None:
         cfg.experiment_name = args.name
     if args.timesteps is not None:

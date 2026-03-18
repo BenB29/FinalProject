@@ -18,8 +18,8 @@ vehicle:
   mass: 780.0
   wheelbase: 3.0
   max_speed: 80.0
-  max_steering_angle: 0.40
-  max_steering_rate: 0.70
+  max_steering_angle: 0.30
+  max_steering_rate: 0.60
   max_throttle_accel: 15.0
   max_brake_decel: 22.0
   drag_coeff: 0.55

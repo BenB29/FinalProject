@@ -1,16 +1,15 @@
-# Bahrain International Circuit — loaded from data/tracks/Bahrain.geojson
+# Brazil — loaded from data/tracks/Brazil.geojson
 #
-# Bahrain is ~5.4 km, mix of tight corners and long straights.
-# Heavy braking zones, good traction demands.
-# Half-width ~7 m (real Bahrain is 12-16 m wide).
+# ~4.3km, anti-clockwise with elevation
+# Half-width ~7 m.
 
-experiment_name: "bahrain"
+experiment_name: "Brazil"
 obs_mode: "C"
 seed: 42
 device: "cuda"
 
 track:
-  name: "Bahrain"
+  name: "Brazil"
   half_width: 7.0
   lookahead_distances: [5, 15, 30, 60, 100, 175, 300]
 

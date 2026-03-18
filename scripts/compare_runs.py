@@ -8,7 +8,8 @@ Loads eval_history.csv from each run directory and plots:
 
 Usage
 -----
-    python scripts/compare_runs.py                   # compare A, B, C
+    python scripts/compare_runs.py                   # compare A, B, C (circuit_lite)
+    python scripts/compare_runs.py --config configs/suzuka_full.yaml
     python scripts/compare_runs.py --modes A B
 """
 from __future__ import annotations
@@ -24,13 +25,15 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from racing_rl.config.loader import load_config_for_mode
+from racing_rl.config.loader import load_config, load_config_for_mode
 from racing_rl.utils.path_utils import get_run_dir, _REPO_ROOT
 
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Compare A/B/C training curves")
     p.add_argument("--modes", nargs="+", choices=["A", "B", "C"], default=["A", "B", "C"])
+    p.add_argument("--config", "-c", default=None,
+                   help="Base config YAML (same as used for run_experiment.py).")
     p.add_argument("--out-dir", default=None)
     return p.parse_args()
 
@@ -39,11 +42,23 @@ def main() -> None:
     args = parse_args()
     colours = {"A": "#ff6b6b", "B": "#4ecdc4", "C": "#ffe66d"}
 
+    # Determine track name for folder structure
+    if args.config:
+        _base_cfg = load_config(args.config)
+    else:
+        _base_cfg = load_config_for_mode("B")
+    track_name = _base_cfg.track.name
+
     fig, axes = plt.subplots(1, 3, figsize=(16, 5), dpi=120)
     fig.patch.set_facecolor("#1a1a1a")
 
     for mode in args.modes:
-        cfg = load_config_for_mode(mode)
+        if args.config:
+            cfg = load_config(args.config)
+        else:
+            cfg = load_config_for_mode(mode)
+        cfg.obs_mode = mode
+        cfg.experiment_name = f"experiment_{track_name}/obs_{mode}"
         run_dir = get_run_dir(cfg)
         history_path = run_dir / "eval_history.csv"
 
@@ -77,7 +92,10 @@ def main() -> None:
 
     plt.tight_layout()
 
-    out_dir = Path(args.out_dir) if args.out_dir else _REPO_ROOT / "outputs" / "comparison"
+    if args.out_dir:
+        out_dir = Path(args.out_dir)
+    else:
+        out_dir = _REPO_ROOT / "outputs" / f"experiment_{track_name}" / "comparison"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / "training_curves_comparison.png"
     fig.savefig(out_path, dpi=120, bbox_inches="tight", facecolor=fig.get_facecolor())

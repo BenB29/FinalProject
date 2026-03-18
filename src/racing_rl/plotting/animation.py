@@ -24,8 +24,11 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.colors as mcolors
 from matplotlib.animation import FuncAnimation
+from matplotlib.transforms import Affine2D
+from PIL import Image
 
 from racing_rl.tracks.base import BaseTrack
+from racing_rl.plotting.wheel_asset import get_wheel_path
 
 # Trajectory tuple indices
 _X, _Y, _SPD, _HDG, _STEER, _ACCEL = 0, 1, 2, 3, 4, 5
@@ -369,110 +372,26 @@ def save_lap_animation(
             ))
 
     # ------------------------------------------------------------------ #
-    #  Steering wheel — F1-style rectangular with display + buttons       #
+    #  Steering wheel — PNG-based, rotated per frame                     #
     # ------------------------------------------------------------------ #
+    # Visual rotation gain: map max_steering_angle → ±180° of wheel turn.
+    _STEER_VISUAL_GAIN = np.pi / 0.45
+
+    # Load the wheel image once
+    _wheel_img = np.array(Image.open(str(get_wheel_path())))
+
     def draw_steering_wheel(ax, angle_rad):
         ax.clear()
         ax.set_facecolor("#1a1a1a")
-        ax.set_xlim(-1.5, 1.5)
-        ax.set_ylim(-1.5, 1.5)
-        ax.set_aspect("equal")
         ax.axis("off")
 
-        ca, sa = np.cos(-angle_rad), np.sin(-angle_rad)
+        # Amplify the rotation so full lock = 180° visual turn
+        vis_deg = np.degrees(angle_rad * _STEER_VISUAL_GAIN)
 
-        def _rot(px, py):
-            """Rotate point around origin by steering angle."""
-            return px * ca - py * sa, px * sa + py * ca
-
-        def _rot_pts(pts):
-            """Rotate array of (x, y) points."""
-            return [_rot(px, py) for px, py in pts]
-
-        # --- Main wheel body (rectangular with rounded ends) --- #
-        # Top curved section
-        top_arc = [_rot(1.1 * np.cos(t), 1.1 * np.sin(t))
-                   for t in np.linspace(0.35, np.pi - 0.35, 20)]
-        # Bottom curved section
-        bot_arc = [_rot(1.1 * np.cos(t), 1.1 * np.sin(t))
-                   for t in np.linspace(np.pi + 0.55, 2 * np.pi - 0.55, 15)]
-        # Connect with straight sides
-        wheel_pts = list(top_arc) + list(bot_arc)
-        ax.add_patch(patches.Polygon(
-            wheel_pts, closed=True, facecolor="#2a2a2a", edgecolor="#555555",
-            lw=2.0, zorder=2,
-        ))
-
-        # --- Grip handles (thicker at 9 and 3 o'clock) --- #
-        for side in [1, -1]:
-            grip = _rot_pts([
-                (side * 0.85, -0.35),
-                (side * 1.15, -0.30),
-                (side * 1.15,  0.30),
-                (side * 0.85,  0.35),
-            ])
-            ax.add_patch(patches.Polygon(
-                grip, closed=True, facecolor="#444444", edgecolor="#666666",
-                lw=1.5, zorder=4,
-            ))
-
-        # --- Centre display screen --- #
-        screen = _rot_pts([
-            (-0.45, -0.22),
-            ( 0.45, -0.22),
-            ( 0.45,  0.22),
-            (-0.45,  0.22),
-        ])
-        ax.add_patch(patches.Polygon(
-            screen, closed=True, facecolor="#001a00", edgecolor="#004400",
-            lw=1.0, zorder=5,
-        ))
-
-        # --- Buttons (two rows of coloured dots) --- #
-        button_specs = [
-            (-0.30,  0.50, "#ff3333"),   # top-left red
-            ( 0.00,  0.50, "#33ff33"),   # top-centre green
-            ( 0.30,  0.50, "#3388ff"),   # top-right blue
-            (-0.30,  0.70, "#ffaa00"),   # upper-left orange
-            ( 0.00,  0.70, "#ff44ff"),   # upper-centre magenta
-            ( 0.30,  0.70, "#ffff33"),   # upper-right yellow
-        ]
-        for bx, by, col in button_specs:
-            rx, ry = _rot(bx, by)
-            ax.plot(rx, ry, "o", color=col, markersize=4, zorder=6)
-
-        # --- Rotary dials (left and right of screen) --- #
-        for side in [1, -1]:
-            dx, dy = _rot(side * 0.62, 0.0)
-            dial = plt.Circle((dx, dy), 0.08, color="#555555",
-                              ec="#777777", lw=1, zorder=6)
-            ax.add_patch(dial)
-
-        # --- Paddle shifters (behind the wheel) --- #
-        for side in [1, -1]:
-            paddle = _rot_pts([
-                (side * 0.70, -0.55),
-                (side * 1.05, -0.50),
-                (side * 1.05, -0.65),
-                (side * 0.70, -0.70),
-            ])
-            ax.add_patch(patches.Polygon(
-                paddle, closed=True, facecolor="#666666", edgecolor="#888888",
-                lw=0.8, zorder=1,
-            ))
-
-        # --- Top centre marker (red stripe) --- #
-        marker = _rot_pts([
-            (-0.04, 0.95),
-            ( 0.04, 0.95),
-            ( 0.04, 1.12),
-            (-0.04, 1.12),
-        ])
-        ax.add_patch(patches.Polygon(
-            marker, closed=True, facecolor="#ff2222", edgecolor="none",
-            zorder=7,
-        ))
-
+        # Rotate the PIL image (high quality, keeps transparency)
+        wheel_pil = Image.fromarray(_wheel_img)
+        rotated = wheel_pil.rotate(vis_deg, resample=Image.BICUBIC, expand=False)
+        ax.imshow(np.array(rotated))
         ax.set_title("STEERING", color="#888888", fontsize=9, pad=2)
 
     # ------------------------------------------------------------------ #

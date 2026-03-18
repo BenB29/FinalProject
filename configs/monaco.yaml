@@ -1,16 +1,15 @@
-# Bahrain International Circuit — loaded from data/tracks/Bahrain.geojson
+# Monaco — loaded from data/tracks/Monaco.geojson
 #
-# Bahrain is ~5.4 km, mix of tight corners and long straights.
-# Heavy braking zones, good traction demands.
-# Half-width ~7 m (real Bahrain is 12-16 m wide).
+# ~3.3km, tight hairpins and narrow streets
+# Half-width ~7 m.
 
-experiment_name: "bahrain"
+experiment_name: "Monaco"
 obs_mode: "C"
 seed: 42
 device: "cuda"
 
 track:
-  name: "Bahrain"
+  name: "Monaco"
   half_width: 7.0
   lookahead_distances: [5, 15, 30, 60, 100, 175, 300]
 

@@ -167,10 +167,20 @@ class BestModelTracker:
 
     def _promote(self, metrics: EvalMetrics, model_src: Path) -> None:
         """Copy model file to best_model.zip and persist metrics."""
+        import time
         model_src = Path(model_src)
         if model_src.exists():
             dest = self.best_model_path
-            shutil.copy2(model_src, dest)
+            # Retry — OneDrive can briefly lock files during sync
+            for attempt in range(5):
+                try:
+                    shutil.copy2(model_src, dest)
+                    break
+                except (PermissionError, OSError):
+                    if attempt < 4:
+                        time.sleep(0.5)
+                    else:
+                        raise
 
         self._best = metrics
         self._save_best_metrics()

@@ -51,10 +51,10 @@ class RewardConfig:
     w_progress: float = 2.0           # reward per metre of arc-length progress
     w_speed: float = 0.005            # small bonus for speed  (anti-crawl)
     w_slip: float = -3.0              # penalty per unit over-grip slip
-    w_steer_smooth: float = -0.05     # penalty for steering-rate magnitude
-    w_accel_smooth: float = -0.02     # penalty for accel-command jerk
+    w_steer_smooth: float = -0.15     # penalty for steering-rate magnitude
+    w_accel_smooth: float = -0.20     # penalty for accel-command jerk
     lap_completion_bonus: float = 500.0
-    off_track_penalty: float = -50.0
+    off_track_penalty: float = -200.0
     min_progress_per_step: float = 0.10   # m forward progress to avoid stall-term
 
 

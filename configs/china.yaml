@@ -1,16 +1,15 @@
-# Bahrain International Circuit — loaded from data/tracks/Bahrain.geojson
+# China — loaded from data/tracks/China.geojson
 #
-# Bahrain is ~5.4 km, mix of tight corners and long straights.
-# Heavy braking zones, good traction demands.
-# Half-width ~7 m (real Bahrain is 12-16 m wide).
+# ~5.5km, long corners and heavy braking zones
+# Half-width ~7 m.
 
-experiment_name: "bahrain"
+experiment_name: "China"
 obs_mode: "C"
 seed: 42
 device: "cuda"
 
 track:
-  name: "Bahrain"
+  name: "China"
   half_width: 7.0
   lookahead_distances: [5, 15, 30, 60, 100, 175, 300]
 
@@ -35,7 +34,7 @@ obs:
 
 env:
   max_steps: 11000
-  no_progress_steps: 600
+  no_progress_steps: 500
 
 training:
   total_timesteps: 5_000_000

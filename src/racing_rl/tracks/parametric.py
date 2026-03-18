@@ -25,6 +25,7 @@ from typing import List, Tuple
 
 import numpy as np
 from scipy.interpolate import splev, splprep
+from scipy.ndimage import gaussian_filter1d
 from scipy.spatial import KDTree
 
 from .base import BaseTrack, TrackQuery
@@ -140,6 +141,11 @@ class ParametricTrack(BaseTrack):
 
         # Signed curvature: κ = (x' y'' - y' x'') / |r'|^3
         curvature = (dx_du * d2y_du2 - dy_du * d2x_du2) / (speed_sq * speed + 1e-12)
+
+        # Smooth curvature to remove spline artefacts (spiky kinks from
+        # noisy GPS waypoints).  Gaussian sigma = 5 samples ≈ 2.5-5 m
+        # depending on sample_ds.  Uses wrap mode for the closed loop.
+        curvature = gaussian_filter1d(curvature, sigma=5, mode="wrap")
 
         self._n = n_samples
         self._total_length = total_length
