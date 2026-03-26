@@ -33,7 +33,7 @@ from racing_rl.config.loader import load_config, load_config_for_mode
 from racing_rl.tracks.parametric import build_track
 from racing_rl.utils.path_utils import get_run_dir, _REPO_ROOT
 
-COLOURS = {"A": "#ff6b6b", "B": "#4ecdc4", "C": "#ffe66d"}
+COLOURS = {"A": "#e74c3c", "B": "#2ecc71", "C": "#3498db"}
 DT = 0.05  # sim timestep
 
 
@@ -41,6 +41,9 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Full experiment analysis")
     p.add_argument("--modes", nargs="+", choices=["A", "B", "C"], default=["A", "B", "C"])
     p.add_argument("--config", "-c", default=None)
+    p.add_argument("--experiment", "-e", default=None,
+                   help="Experiment folder name (e.g. experiment_Suzuka_seed7). "
+                        "Overrides the default experiment_{track}/obs_{mode} path.")
     return p.parse_args()
 
 
@@ -50,7 +53,10 @@ def _load_cfg(args, mode):
     else:
         cfg = load_config_for_mode(mode)
     cfg.obs_mode = mode
-    cfg.experiment_name = f"experiment_{cfg.track.name}/obs_{mode}"
+    if args.experiment:
+        cfg.experiment_name = f"{args.experiment}/obs_{mode}"
+    else:
+        cfg.experiment_name = f"experiment_{cfg.track.name}/obs_{mode}"
     return cfg
 
 
@@ -82,8 +88,8 @@ def _get_trajectory(cfg, track):
 def plot_training_curves(args, track_name, out_dir):
     """4-panel training curves: completion, lap time, mean speed, max slip."""
     fig, axes = plt.subplots(2, 2, figsize=(14, 10), dpi=120)
-    fig.patch.set_facecolor("#1a1a1a")
-    fig.suptitle(f"Training Curves — {track_name}", color="white", fontsize=14, y=0.98)
+    fig.patch.set_facecolor("white")
+    fig.suptitle(f"Training Curves — {track_name}", fontsize=14, y=0.98)
 
     for mode in args.modes:
         cfg = _load_cfg(args, mode)
@@ -107,19 +113,16 @@ def plot_training_curves(args, track_name, out_dir):
     ylabels = ["Completion [%]", "Lap time [s]", "Speed [m/s]", "Slip ratio"]
 
     for ax, t, yl in zip(axes.flat, titles, ylabels):
-        ax.set_facecolor("#1a1a1a")
-        ax.set_title(t, color="white", fontsize=11)
-        ax.set_xlabel("Eval index", color="white")
-        ax.set_ylabel(yl, color="white")
-        ax.tick_params(colors="white")
-        for spine in ax.spines.values():
-            spine.set_edgecolor("#444444")
-        ax.legend(labelcolor="white", facecolor="#333333", framealpha=0.5)
-        ax.grid(True, color="#333333", alpha=0.3)
+        ax.set_facecolor("white")
+        ax.set_title(t, fontsize=11)
+        ax.set_xlabel("Eval index")
+        ax.set_ylabel(yl)
+        ax.legend(framealpha=0.7)
+        ax.grid(True, color="#cccccc", alpha=0.5)
 
     plt.tight_layout()
     path = out_dir / "training_curves.png"
-    fig.savefig(path, dpi=120, bbox_inches="tight", facecolor=fig.get_facecolor())
+    fig.savefig(path, dpi=120, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"  Saved: {path}")
 
@@ -132,8 +135,8 @@ def plot_speed_heatmaps(args, track, track_name, trajectories, out_dir):
 
     n = len(modes_with_traj)
     fig, axes = plt.subplots(1, n, figsize=(7 * n, 6), dpi=120)
-    fig.patch.set_facecolor("#1a1a1a")
-    fig.suptitle(f"Speed Heatmap — {track_name}", color="white", fontsize=14, y=0.98)
+    fig.patch.set_facecolor("white")
+    fig.suptitle(f"Speed Heatmap — {track_name}", fontsize=14, y=0.98)
 
     if n == 1:
         axes = [axes]
@@ -143,29 +146,25 @@ def plot_speed_heatmaps(args, track, track_name, trajectories, out_dir):
     right = track.right_boundary_xy
 
     for ax, (mode, traj) in zip(axes, modes_with_traj):
-        ax.set_facecolor("#1a1a1a")
+        ax.set_facecolor("white")
         # Track boundaries
-        ax.plot(left[:, 0], left[:, 1], color="#555555", lw=0.8)
-        ax.plot(right[:, 0], right[:, 1], color="#555555", lw=0.8)
-        ax.plot(centre[:, 0], centre[:, 1], color="#333333", lw=0.5, ls="--")
+        ax.plot(left[:, 0], left[:, 1], color="#999999", lw=0.8)
+        ax.plot(right[:, 0], right[:, 1], color="#999999", lw=0.8)
+        ax.plot(centre[:, 0], centre[:, 1], color="#cccccc", lw=0.5, ls="--")
 
         arr = np.array(traj)
         x, y, speed = arr[:, 0], arr[:, 1], arr[:, 2]
 
         sc = ax.scatter(x, y, c=speed, cmap="RdYlGn", s=3, vmin=0, vmax=80)
-        ax.set_title(f"Obs {mode}", color="white", fontsize=11)
+        ax.set_title(f"Obs {mode}", fontsize=11)
         ax.set_aspect("equal")
-        ax.tick_params(colors="white")
-        for spine in ax.spines.values():
-            spine.set_edgecolor("#444444")
 
         cbar = fig.colorbar(sc, ax=ax, shrink=0.8)
-        cbar.set_label("Speed [m/s]", color="white")
-        cbar.ax.tick_params(colors="white")
+        cbar.set_label("Speed [m/s]")
 
     plt.tight_layout()
     path = out_dir / "speed_heatmaps.png"
-    fig.savefig(path, dpi=120, bbox_inches="tight", facecolor=fig.get_facecolor())
+    fig.savefig(path, dpi=120, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"  Saved: {path}")
 
@@ -177,8 +176,8 @@ def plot_telemetry(args, track, track_name, trajectories, out_dir):
         return
 
     fig, axes = plt.subplots(3, 1, figsize=(16, 10), dpi=120, sharex=True)
-    fig.patch.set_facecolor("#1a1a1a")
-    fig.suptitle(f"Telemetry Comparison — {track_name}", color="white", fontsize=14, y=0.98)
+    fig.patch.set_facecolor("white")
+    fig.suptitle(f"Telemetry Comparison — {track_name}", fontsize=14, y=0.98)
 
     for mode, traj in modes_with_traj:
         arr = np.array(traj)
@@ -203,21 +202,18 @@ def plot_telemetry(args, track, track_name, trajectories, out_dir):
     titles = ["Speed vs Distance", "Steering Angle vs Distance", "Throttle / Brake vs Distance"]
 
     for ax, t, yl in zip(axes, titles, ylabels):
-        ax.set_facecolor("#1a1a1a")
-        ax.set_title(t, color="white", fontsize=11)
-        ax.set_ylabel(yl, color="white")
-        ax.tick_params(colors="white")
-        for spine in ax.spines.values():
-            spine.set_edgecolor("#444444")
-        ax.legend(labelcolor="white", facecolor="#333333", framealpha=0.5)
-        ax.grid(True, color="#333333", alpha=0.3)
+        ax.set_facecolor("white")
+        ax.set_title(t, fontsize=11)
+        ax.set_ylabel(yl)
+        ax.legend(framealpha=0.7)
+        ax.grid(True, color="#cccccc", alpha=0.5)
 
-    axes[2].set_xlabel("Distance [m]", color="white")
-    axes[2].axhline(0, color="#666666", lw=0.5, ls="--")
+    axes[2].set_xlabel("Distance [m]")
+    axes[2].axhline(0, color="#999999", lw=0.5, ls="--")
 
     plt.tight_layout()
     path = out_dir / "telemetry_comparison.png"
-    fig.savefig(path, dpi=120, bbox_inches="tight", facecolor=fig.get_facecolor())
+    fig.savefig(path, dpi=120, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"  Saved: {path}")
 
@@ -229,8 +225,8 @@ def plot_racing_lines(args, track, track_name, trajectories, out_dir):
         return
 
     fig, ax = plt.subplots(figsize=(12, 10), dpi=120)
-    fig.patch.set_facecolor("#1a1a1a")
-    ax.set_facecolor("#1a1a1a")
+    fig.patch.set_facecolor("white")
+    ax.set_facecolor("white")
 
     centre = track.centreline_xy
     left = track.left_boundary_xy
@@ -239,27 +235,24 @@ def plot_racing_lines(args, track, track_name, trajectories, out_dir):
     ax.fill(
         np.concatenate([left[:, 0], right[::-1, 0]]),
         np.concatenate([left[:, 1], right[::-1, 1]]),
-        color="#2a2a2a", zorder=0
+        color="#e8e8e8", zorder=0
     )
-    ax.plot(left[:, 0], left[:, 1], color="#666666", lw=1.5)
-    ax.plot(right[:, 0], right[:, 1], color="#666666", lw=1.5)
-    ax.plot(centre[:, 0], centre[:, 1], color="#444444", lw=0.5, ls="--")
+    ax.plot(left[:, 0], left[:, 1], color="#888888", lw=1.5)
+    ax.plot(right[:, 0], right[:, 1], color="#888888", lw=1.5)
+    ax.plot(centre[:, 0], centre[:, 1], color="#bbbbbb", lw=0.5, ls="--")
 
     for mode, traj in modes_with_traj:
         arr = np.array(traj)
         ax.plot(arr[:, 0], arr[:, 1], color=COLOURS[mode], label=f"Obs {mode}",
-                lw=0.9, alpha=0.6)
+                lw=1.2, alpha=0.8)
 
-    ax.set_title(f"Racing Line Comparison — {track_name}", color="white", fontsize=13)
+    ax.set_title(f"Racing Line Comparison — {track_name}", fontsize=13)
     ax.set_aspect("equal")
-    ax.tick_params(colors="white")
-    for spine in ax.spines.values():
-        spine.set_edgecolor("#444444")
-    ax.legend(labelcolor="white", facecolor="#333333", framealpha=0.7, fontsize=11)
+    ax.legend(framealpha=0.7, fontsize=11)
 
     plt.tight_layout()
     path = out_dir / "racing_lines.png"
-    fig.savefig(path, dpi=120, bbox_inches="tight", facecolor=fig.get_facecolor())
+    fig.savefig(path, dpi=120, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"  Saved: {path}")
 
@@ -316,10 +309,11 @@ def main() -> None:
     track_name = base_cfg.track.name
     track = build_track(track_name, base_cfg.track.half_width)
 
-    out_dir = _REPO_ROOT / "outputs" / f"experiment_{track_name}" / "comparison"
+    experiment_label = args.experiment if args.experiment else f"experiment_{track_name}"
+    out_dir = _REPO_ROOT / "outputs" / experiment_label / "comparison_light"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"\nAnalysing experiment: {track_name}")
+    print(f"\nAnalysing experiment: {experiment_label}")
     print(f"Output: {out_dir}\n")
 
     # 1. Training curves
