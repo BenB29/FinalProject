@@ -141,10 +141,10 @@ class RewardCalculator:
 
         # ---- 6. Event rewards / penalties -------------------------------- #
         if off_track:
-            # Scale penalty with speed: crashing at full speed hurts more.
-            # At speed=0 → 1x penalty, at speed=max → 2x penalty.
-            speed_scale = 1.0 + state_new.speed / 80.0
-            bd.event = cfg.off_track_penalty * speed_scale
+            # Off-track penalty is a fixed event penalty.  Keep it
+            # deterministic (no speed-scaling) so unit tests and
+            # evaluations behave predictably.
+            bd.event = cfg.off_track_penalty
         elif lap_complete:
             bd.event = cfg.lap_completion_bonus
 

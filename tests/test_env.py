@@ -149,7 +149,7 @@ def test_eval_mode_logs_trajectory():
         done = term or trunc
     traj = e.get_trajectory()
     assert len(traj) > 0
-    assert len(traj[0]) == 3  # (x, y, speed)
+    assert len(traj[0]) == 6  # (x, y, speed, heading, steering, accel_cmd)
     e.close()
 
 
