@@ -17,7 +17,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import sys
+import zipfile
 from pathlib import Path
 
 import matplotlib
@@ -62,17 +64,35 @@ def _load_cfg(args, mode):
 
 def _get_trajectory(cfg, track):
     """Run best model deterministically and return trajectory."""
-    from stable_baselines3 import SAC
+    from stable_baselines3 import SAC, PPO
     from racing_rl.env.racing_env import RacingEnv
 
     run_dir = get_run_dir(cfg)
-    model_path = run_dir / "models" / "best_model.zip"
+    # best_model.zip lives at run_dir root (placed by BestModelTracker)
+    model_path = run_dir / "best_model.zip"
+    if not model_path.exists():
+        # Fallback: check inside models/ subdirectory
+        model_path = run_dir / "models" / "best_model.zip"
     if not model_path.exists():
         model_path = run_dir / "models" / "final_model.zip"
     if not model_path.exists():
         return None
 
-    model = SAC.load(str(model_path))
+    # Auto-detect algorithm from the saved model
+    try:
+        with zipfile.ZipFile(str(model_path), "r") as zf:
+            data = json.loads(zf.read("data"))
+            algo_name = data.get("policy_class", "")
+        if "PPO" in algo_name or "ActorCritic" in algo_name:
+            model = PPO.load(str(model_path))
+        else:
+            model = SAC.load(str(model_path))
+    except Exception:
+        # Fallback: try SAC first, then PPO
+        try:
+            model = SAC.load(str(model_path))
+        except Exception:
+            model = PPO.load(str(model_path))
     env = RacingEnv(cfg, eval_mode=True)
     obs, _ = env.reset(seed=cfg.seed)
     done = False
